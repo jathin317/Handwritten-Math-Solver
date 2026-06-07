@@ -52,3 +52,19 @@ function sketch(event)
     ctx.lineTo(coord.x, coord.y);
     ctx.stroke();
 }
+
+function clearCanvas()
+{
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+async function solve() {
+    const imageData = canvas.toDataURL('image/png');
+    const response = await fetch('/solve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData })
+    });
+    const result = await response.json()
+    document.getElementById('result.innerText') = result.expression + '=' + result.simplified;
+}
