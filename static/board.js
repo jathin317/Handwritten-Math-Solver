@@ -12,8 +12,10 @@ const ctx = canvas.getContext("2d");
 
 function resize()
 {
-    ctx.canvas.width = window.innerWidth;
-    ctx.canvas.height = window.innerHeight;
+    ctx.canvas.width = 800;
+    ctx.canvas.height = 200;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 let coord = {x:0, y:0};
@@ -66,5 +68,5 @@ async function solve() {
         body: JSON.stringify({ image: imageData })
     });
     const result = await response.json()
-    document.getElementById('result.innerText') = result.expression + '=' + result.simplified;
+    document.getElementById('result').innerText = result.expression + '=' + result.simplified;
 }
