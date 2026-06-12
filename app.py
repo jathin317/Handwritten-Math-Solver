@@ -5,6 +5,7 @@ from flask import jsonify, request, Flask, render_template
 import cv2 as cv
 import torch
 import torch.nn as nn
+import re
 
 app = Flask(__name__)
 
@@ -70,7 +71,7 @@ def solve():
     crops = segmentImage(thresh_inv, thresh_org)
     recognised, confidence = recognise_symbols(crops)
     expression = ''.join(recognised)
-
+    expression = re.sub(r"(\d)([a-zA-Z])", r"\1*\2", expression)
 
     try:
         simplified = str(simplify(sympify(expression)))
