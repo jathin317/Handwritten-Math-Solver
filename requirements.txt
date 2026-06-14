@@ -1,7 +1,7 @@
 flask
-opencv-python
+opencv-python-headless
 torch
 torchvision
 sympy
 numpy
-waitress
+flask-cors

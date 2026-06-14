@@ -1,25 +1,363 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Math Solver</title>
-        <style>
-            canvas{
-                border: 1px solid black;
-                display: block;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Draw Equation here</h1>
-        <div id="control">
-            <button onclick="clearCanvas()">Clear</button>
-            <button onclick="solve()">Solve</button>
-            <p id="result"></p>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Solver</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --surface2: #1a1a24;
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.15);
+            --text: #e8e8f0;
+            --text-muted: #6b6b80;
+            --text-dim: #3a3a50;
+            --accent: #7c6fff;
+            --accent-dim: rgba(124,111,255,0.12);
+            --accent-glow: rgba(124,111,255,0.25);
+            --success: #4ade80;
+            --success-dim: rgba(74,222,128,0.1);
+            --canvas-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem 4rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-dim);
+            border: 1px solid var(--accent-glow);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        h1 span {
+            color: var(--accent);
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .main {
+            width: 100%;
+            max-width: 760px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .btn-clear {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-clear:hover {
+            color: var(--text);
+            border-color: var(--border-hover);
+            background: var(--surface2);
+        }
+
+        .canvas-wrap {
+            padding: 1.25rem;
+            background: var(--surface);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 200px;
+            border-radius: 10px;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .btn-solve {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.15s;
+            letter-spacing: -0.01em;
+        }
+
+        .btn-solve:hover { opacity: 0.88; }
+        .btn-solve:active { transform: scale(0.99); }
+        .btn-solve:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .result-card {
+            display: none;
+        }
+
+        .result-card.visible {
+            display: block;
+        }
+
+        .result-inner {
+            padding: 1.25rem;
+        }
+
+        .result-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 0.75rem;
+        }
+
+        .result-row:last-child { margin-bottom: 0; }
+
+        .result-key {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            min-width: 90px;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .result-value.accent {
+            color: var(--accent);
+            font-size: 1.4rem;
+        }
+
+        .error-text {
+            font-size: 0.85rem;
+            color: #f87171;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0.75rem 0;
+        }
+
+        .examples-card .card-header {
+            border-bottom: none;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 8px;
+            padding: 0 1.25rem 1.25rem;
+        }
+
+        .example-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: default;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            transition: border-color 0.15s;
+        }
+
+        .example-chip:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+
+        .example-chip .expr { color: var(--text); font-size: 0.88rem; }
+        .example-chip .arrow { color: var(--text-dim); font-size: 0.75rem; }
+        .example-chip .result { color: var(--accent); }
+
+        .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .btn-solve.loading .btn-label { display: none; }
+        .btn-solve.loading .spinner { display: inline-block; }
+
+        .tip {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <div class="logo-icon">∫</div>
+        <span class="logo-text">MathSolver</span>
+    </div>
+    <h1>Draw. <span>Solve.</span></h1>
+    <p class="subtitle">Handwrite any math expression and get it simplified instantly.</p>
+</header>
+
+<div class="main">
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-label">Canvas</span>
+            <button class="btn-clear" onclick="clearCanvas()">Clear</button>
         </div>
-        <hr>
-        <canvas id="canvas"></canvas>  
-        <script src="{{ url_for('static', filename='board.js') }}"></script>
-    </body>
+        <div class="canvas-wrap">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+
+    <button class="btn-solve" id="solveBtn" onclick="solve()">
+        <span class="btn-label">Simplify expression</span>
+        <span class="spinner"></span>
+    </button>
+    <p class="tip">Write clearly · Use + − / for operators · Variables: x y z w</p>
+
+    <div class="card result-card" id="resultCard">
+        <div class="card-header">
+            <span class="card-label">Result</span>
+        </div>
+        <div class="result-inner" id="resultInner"></div>
+    </div>
+
+    <div class="card examples-card">
+        <div class="card-header">
+            <span class="card-label">Example expressions</span>
+        </div>
+        <div class="examples-grid">
+            <div class="example-chip">
+                <span class="expr">3x + 5x + 2</span>
+                <span class="arrow">→</span>
+                <span class="result">8x + 2</span>
+            </div>
+            <div class="example-chip">
+                <span class="expr">9 - 3 + 2</span>
+                <span class="arrow">→</span>
+                <span class="result">8</span>
+            </div>
+            <div class="example-chip">
+                <span class="expr">10 / 2</span>
+                <span class="arrow">→</span>
+                <span class="result">5</span>
+            </div>
+            <div class="example-chip">
+                <span class="expr">2x + 3x</span>
+                <span class="arrow">→</span>
+                <span class="result">5x</span>
+            </div>
+            <div class="example-chip">
+                <span class="expr">y + y + y</span>
+                <span class="arrow">→</span>
+                <span class="result">3y</span>
+            </div>
+            <div class="example-chip">
+                <span class="expr">8 / 4 + 1</span>
+                <span class="arrow">→</span>
+                <span class="result">3</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script src="{{ url_for('static', filename='board.js') }}"></script>
+</body>
 </html>
