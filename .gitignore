@@ -1,0 +1,6 @@
+image.png
+/symbols
+/data
+/.vscode
+__pycache__*.pth
+*.pth
